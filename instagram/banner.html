@@ -1,0 +1,228 @@
+<title>器の独り言 バナー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;1,400&display=swap">
+<style>
+:root{
+  --bg:#EEEEE9; --panel:#E3E4DD; --ink:#26303A; --sub:#66706B; --line:#C9CCC3; --accent:#9C7A44;
+  --mincho:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#1B1917;--panel:#26221F;--ink:#E7E2D8;--sub:#A1998E;--line:#3A342F;--accent:#C9A461;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#1B1917;--panel:#26221F;--ink:#E7E2D8;--sub:#A1998E;--line:#3A342F;--accent:#C9A461;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--mincho);padding:28px 16px 48px}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-direction:column;gap:10px}
+h1{font-size:26px;font-weight:700;letter-spacing:.08em;margin:0;text-wrap:balance}
+header p{margin:0;font-size:15px;line-height:1.9;color:var(--sub)}
+header strong{color:var(--ink);font-weight:500}
+.controls{display:flex;flex-direction:column;gap:16px;padding:18px;background:var(--panel);border-radius:6px}
+.row{display:flex;flex-direction:column;gap:8px}
+.label{font-size:13px;letter-spacing:.12em;color:var(--sub)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:15px;padding:9px 16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.chip[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.chip:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dot{width:14px;height:14px;border-radius:50%;border:1px solid var(--line)}
+input{font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;width:100%;box-sizing:border-box}
+.items{display:flex;flex-direction:column;gap:32px}
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--line);background:var(--panel)}
+figure.icon img{max-width:320px;border-radius:50%}
+figure.story img{max-width:360px}
+figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:15px}
+figcaption span{color:var(--sub);font-size:13px;font-variant-numeric:tabular-nums}
+.note{font-size:13px;line-height:1.9;color:var(--sub);margin:0}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>器の独り言 バナー</h1>
+    <p>散文詩アカウント用の画像です。<br><strong>画像を長押し →「写真に保存」</strong>でカメラロールに保存できます。</p>
+  </header>
+
+  <section class="controls" aria-label="設定">
+    <div class="row">
+      <span class="label">釉薬の色</span>
+      <div class="chips" id="themes"></div>
+    </div>
+    <div class="row">
+      <label class="label" for="handle">アカウント名（任意・画像の右下に入ります）</label>
+      <input id="handle" type="text" placeholder="例：@utsuwa_no_hitorigoto" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+  </section>
+
+  <section class="items" id="items"></section>
+
+  <p class="note">インスタにはプロフィール上部の横長バナー枠がないため、最初の投稿（4:5）とプロフィール画像、ストーリー／ハイライト用の縦長をセットにしています。4:5 はプロフィール一覧で左右が少し切れても文字が欠けない配置です。</p>
+</div>
+
+<script>
+const THEMES = {
+  hakuji:  {name:"白磁", bg:"#ECEDE8", ink:"#28323C", sub:"#6C756F", fill:"#DFE2DB", inner:"#CDD2C9", crack:"rgba(40,50,60,.20)", gold:"#A8854A", grain:"0,0,0"},
+  seiji:   {name:"青磁", bg:"#D2DDD5", ink:"#2A3833", sub:"#5B6B63", fill:"#BCCCC1", inner:"#A8BBAE", crack:"rgba(35,52,45,.22)", gold:"#94733F", grain:"0,0,0"},
+  tenmoku: {name:"天目", bg:"#1E1A17", ink:"#E8E2D6", sub:"#9C9387", fill:"#2E2723", inner:"#3E3129", crack:"rgba(232,226,214,.13)", gold:"#C9A461", grain:"255,255,255"}
+};
+const SIZES = [
+  {id:"post",   label:"最初の投稿（4:5）", w:1080, h:1350, cls:""},
+  {id:"square", label:"投稿・正方形",       w:1080, h:1080, cls:""},
+  {id:"story",  label:"ストーリー／ハイライト", w:1080, h:1920, cls:"story"},
+  {id:"icon",   label:"プロフィール画像",   w:1080, h:1080, cls:"icon"}
+];
+const TITLE = "器の独り言", SUB = "記憶の言葉", EN = "monologue of a vessel  ·  words of memory";
+const JP = '"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif';
+const EN_FONT = '"Cormorant Garamond","Times New Roman",serif';
+
+let state = {theme:"hakuji", handle:""};
+try{ const s = JSON.parse(localStorage.getItem("utsuwa-banner")||"{}"); if(THEMES[s.theme]) state.theme=s.theme; if(typeof s.handle==="string") state.handle=s.handle; }catch(e){}
+
+function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+function grain(ctx,W,H,t,r){
+  const n = Math.floor(W*H/45);
+  for(let i=0;i<n;i++){
+    ctx.fillStyle = `rgba(${t.grain},${(0.015+r()*0.035).toFixed(3)})`;
+    ctx.fillRect(r()*W, r()*H, 1.4, 1.4);
+  }
+}
+
+function crackle(ctx, x0,y0,x1,y1, r, count, len){
+  for(let i=0;i<count;i++){
+    let x = x0 + r()*(x1-x0), y = y0 + r()*(y1-y0), a = r()*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(x,y);
+    const steps = 3 + Math.floor(r()*5);
+    for(let s=0;s<steps;s++){ a += (r()-.5)*1.2; x += Math.cos(a)*len*(.4+r()); y += Math.sin(a)*len*(.4+r()); ctx.lineTo(x,y); }
+    ctx.stroke();
+  }
+}
+
+function bowl(ctx, t, cx, rimY, bw, r){
+  const a = bw/2, b = bw*.085, bh = bw*.42, fw = bw*.17, fh = bw*.05, lw = Math.max(2, bw/260);
+  // shadow
+  ctx.save(); ctx.fillStyle = t.ink; ctx.globalAlpha=.08;
+  ctx.beginPath(); ctx.ellipse(cx+bw*.04, rimY+bh+fh, bw*.36, bw*.035, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+  const body = new Path2D();
+  body.moveTo(cx-a, rimY);
+  body.bezierCurveTo(cx-a, rimY+bh*.72, cx-fw*1.7, rimY+bh, cx-fw, rimY+bh);
+  body.lineTo(cx-fw*.9, rimY+bh+fh); body.lineTo(cx+fw*.9, rimY+bh+fh); body.lineTo(cx+fw, rimY+bh);
+  body.bezierCurveTo(cx+fw*1.7, rimY+bh, cx+a, rimY+bh*.72, cx+a, rimY);
+  body.ellipse(cx, rimY, a, b, 0, 0, Math.PI);
+  body.closePath();
+  // glaze body with soft light from upper left
+  const g = ctx.createLinearGradient(cx-a, rimY, cx+a, rimY+bh);
+  g.addColorStop(0, t.fill); g.addColorStop(1, t.inner);
+  ctx.fillStyle = g; ctx.fill(body);
+  // inside of the bowl
+  ctx.save(); ctx.beginPath(); ctx.ellipse(cx, rimY, a, b, 0, 0, Math.PI*2); ctx.fillStyle = t.inner; ctx.fill(); ctx.restore();
+  // crackle (kannyu) inside glaze
+  ctx.save(); ctx.clip(body); ctx.strokeStyle = t.crack; ctx.lineWidth = lw*.5;
+  crackle(ctx, cx-a, rimY, cx+a, rimY+bh, r, 34, bw*.035);
+  // one gold line: a mended memory
+  ctx.strokeStyle = t.gold; ctx.lineWidth = lw*1.3; ctx.lineCap="round"; ctx.lineJoin="round";
+  ctx.beginPath(); let x = cx+a*.28, y = rimY+b*.6; ctx.moveTo(x,y);
+  const pts = [[-.06,.16],[.05,.12],[-.03,.1],[-.09,.14],[.02,.08],[-.05,.11]];
+  for(const [dx,dy] of pts){ x += dx*bw; y += dy*bh*1.25; ctx.lineTo(x,y); }
+  ctx.stroke(); ctx.restore();
+  // outlines
+  ctx.strokeStyle = t.ink; ctx.lineWidth = lw; ctx.globalAlpha=.85;
+  ctx.stroke(body);
+  ctx.beginPath(); ctx.ellipse(cx, rimY, a, b, 0, Math.PI, Math.PI*2); ctx.stroke();
+  ctx.globalAlpha=1;
+}
+
+function vtext(ctx, str, x, y, fs, step){
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  [...str].forEach((c,i)=>ctx.fillText(c, x, y + i*fs*step));
+}
+
+function spaced(ctx, str, x, y, gap){
+  for(const c of str){ ctx.fillText(c, x, y); x += ctx.measureText(c).width + gap; }
+}
+
+function draw(size, t, handle){
+  const {w:W, h:H, id} = size, c = document.createElement("canvas");
+  c.width=W; c.height=H; const ctx = c.getContext("2d"), r = rng(1729);
+  ctx.fillStyle=t.bg; ctx.fillRect(0,0,W,H);
+  grain(ctx,W,H,t,r);
+
+  if(id==="icon"){
+    ctx.save(); ctx.strokeStyle=t.crack; ctx.lineWidth=1.2; crackle(ctx, W*.1,H*.1,W*.9,H*.9, r, 26, W*.03); ctx.restore();
+    ctx.strokeStyle=t.ink; ctx.globalAlpha=.35; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(W/2,H/2,W*.36,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+    ctx.fillStyle=t.ink; ctx.font=`700 ${W*.38}px ${JP}`; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("器", W/2, H/2+W*.01);
+    ctx.strokeStyle=t.gold; ctx.lineWidth=5; ctx.lineCap="round"; ctx.lineJoin="round";
+    ctx.beginPath(); ctx.moveTo(W*.80,H*.60); ctx.lineTo(W*.75,H*.66); ctx.lineTo(W*.77,H*.71); ctx.lineTo(W*.71,H*.78); ctx.stroke();
+    return c;
+  }
+
+  const pad = W*.09;
+  const L = {
+    post:   {fs:W*.088, ty:H*.10, cx:W*.40, rim:H*.56, bw:W*.54},
+    square: {fs:W*.078, ty:H*.10, cx:W*.40, rim:H*.53, bw:W*.50},
+    story:  {fs:W*.105, ty:H*.15, cx:W*.44, rim:H*.56, bw:W*.62}
+  }[id];
+
+  // label
+  ctx.fillStyle=t.sub; ctx.font=`500 ${W*.026}px ${JP}`; ctx.textAlign="left"; ctx.textBaseline="alphabetic";
+  const labelY = id==="story" ? H*.15 : pad + W*.026;
+  spaced(ctx, "散文詩", pad, labelY, W*.012);
+  ctx.fillRect(pad, labelY + W*.022, W*.07, Math.max(1.5,W/700));
+
+  // vertical title + subtitle
+  const tx = W - pad - L.fs/2;
+  ctx.fillStyle=t.ink; ctx.font=`700 ${L.fs}px ${JP}`;
+  vtext(ctx, TITLE, tx, L.ty + L.fs/2, L.fs, 1.14);
+  const sfs = L.fs*.46;
+  ctx.fillStyle=t.sub; ctx.font=`500 ${sfs}px ${JP}`;
+  vtext(ctx, SUB, tx - L.fs*1.25, L.ty + L.fs*1.9, sfs, 1.3);
+
+  bowl(ctx, t, L.cx, L.rim, L.bw, r);
+
+  // footer
+  const fy = id==="story" ? H*.80 : H - pad;
+  ctx.fillStyle=t.sub; ctx.textBaseline="alphabetic";
+  ctx.font=`italic 400 ${W*.03}px ${EN_FONT}`; ctx.textAlign="left";
+  ctx.fillText(EN, pad, fy);
+  if(handle){
+    ctx.fillStyle=t.ink; ctx.font=`500 ${W*.03}px ${EN_FONT}`;
+    if(id==="story"){ ctx.textAlign="left"; ctx.fillText(handle, pad, fy + W*.06); }
+    else { ctx.textAlign="right"; ctx.fillText(handle, W-pad, pad + W*.026); }
+  }
+  return c;
+}
+
+const items = document.getElementById("items"), themesEl = document.getElementById("themes"), handleEl = document.getElementById("handle");
+const imgs = {};
+for(const s of SIZES){
+  const f = document.createElement("figure"); f.className = s.cls;
+  const img = document.createElement("img"); img.alt = `${s.label}（${s.w}×${s.h}）`; img.width=s.w; img.height=s.h;
+  const cap = document.createElement("figcaption"); cap.innerHTML = `${s.label}<span>${s.w} × ${s.h}</span>`;
+  f.append(img, cap); items.append(f); imgs[s.id]=img;
+}
+for(const [k,t] of Object.entries(THEMES)){
+  const b = document.createElement("button"); b.type="button"; b.className="chip"; b.dataset.k=k; b.id="theme-"+k;
+  b.innerHTML = `<span class="dot" style="background:${t.bg}"></span>${t.name}`;
+  b.addEventListener("click", ()=>{ state.theme=k; render(); });
+  themesEl.append(b);
+}
+handleEl.value = state.handle;
+let timer; handleEl.addEventListener("input", ()=>{ clearTimeout(timer); timer=setTimeout(()=>{ state.handle=handleEl.value.trim(); render(); }, 250); });
+
+function render(){
+  try{ localStorage.setItem("utsuwa-banner", JSON.stringify(state)); }catch(e){}
+  themesEl.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed", b.dataset.k===state.theme));
+  const t = THEMES[state.theme];
+  for(const s of SIZES){ imgs[s.id].src = draw(s, t, state.handle).toDataURL("image/png"); }
+}
+
+const fontsReady = Promise.all([
+  document.fonts.load(`700 80px "Shippori Mincho"`, TITLE+"散文詩"),
+  document.fonts.load(`500 40px "Shippori Mincho"`, SUB+"散文詩"),
+  document.fonts.load(`italic 400 30px "Cormorant Garamond"`, EN),
+  document.fonts.load(`500 30px "Cormorant Garamond"`, "@abc_")
+]).catch(()=>{});
+render();
+Promise.race([fontsReady, new Promise(r=>setTimeout(r,4000))]).then(render);
+</script>
